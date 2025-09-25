@@ -1,0 +1,22 @@
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+vendor/
+
+# Env and secrets
+.env
+*.secret
+
+# Logs and temps
+*.log
+tmp/
+*.tmp
+
+# macOS
+.DS_Store
+
+# GoLand/IDE
+.idea/

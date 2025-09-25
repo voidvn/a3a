@@ -1,0 +1,844 @@
+openapi: 3.0.0
+info:
+  title: s4s API
+  description: REST API for s4s - Sales Automation Platform. Contract between backend and frontend.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.s4s.com/v1
+    description: Production server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "uuid-1234"
+        fullName:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          example: "john@doe.com"
+        phone:
+          type: string
+          example: "+1234567890"
+        city:
+          type: string
+          example: "Moscow"
+        role:
+          type: string
+          enum: [user, team, admin]
+          example: "user"
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "uuid-5678"
+        name:
+          type: string
+          example: "Lead Notification Flow"
+        json:
+          type: string
+          example: '{"nodes": [{"id": "1", "type": "trigger", "data": {"type": "webhook"}}]}'
+        active:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-09-17T12:00:00Z"
+    Connection:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "uuid-9012"
+        service:
+          type: string
+          example: "gmail"
+        credentials:
+          type: object
+          additionalProperties: true
+          example: {"apiKey": "encrypted-key"}
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "template-1"
+        name:
+          type: string
+          example: "Lead Alert Template"
+        category:
+          type: string
+          example: "sales"
+        json:
+          type: string
+          example: '{"nodes": [{"id": "1", "type": "trigger", "data": {"type": "lead_new"}}]}'
+    Execution:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "exec-3456"
+        workflowId:
+          type: string
+          example: "uuid-5678"
+        status:
+          type: string
+          enum: [pending, success, failed]
+          example: "success"
+        log:
+          type: string
+          example: "Node1: success, Node2: failed with error 'timeout'"
+        startedAt:
+          type: string
+          format: date-time
+          example: "2025-09-17T12:05:00Z"
+        endedAt:
+          type: string
+          format: date-time
+          example: "2025-09-17T12:06:00Z"
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "sub-7890"
+        plan:
+          type: string
+          enum: [freemium, starter, team]
+          example: "starter"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        usage:
+          type: object
+          properties:
+            workflows:
+              type: integer
+              example: 3
+            executions:
+              type: integer
+              example: 50
+    NotificationSettings:
+      type: object
+      properties:
+        email:
+          type: boolean
+          example: true
+        slack:
+          type: boolean
+          example: false
+        channels:
+          type: array
+          items:
+            type: string
+          example: ["errors", "completions"]
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Invalid request"
+        code:
+          type: integer
+          example: 400
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fullName
+                - email
+                - password
+                - phone
+                - city
+                - role
+              properties:
+                fullName:
+                  type: string
+                  example: "John Doe"
+                email:
+                  type: string
+                  example: "john@doe.com"
+                password:
+                  type: string
+                  example: "securepassword123"
+                phone:
+                  type: string
+                  example: "+1234567890"
+                city:
+                  type: string
+                  example: "Moscow"
+                role:
+                  type: string
+                  enum: [user, team]
+                  example: "user"
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/login:
+    post:
+      summary: Login user
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: "john@doe.com"
+                password:
+                  type: string
+                  example: "securepassword123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/forgot-password:
+    post:
+      summary: Forgot password
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  example: "john@doe.com"
+      responses:
+        '200':
+          description: Reset link sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Reset link sent to email"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/me:
+    get:
+      summary: Get current user
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/invite:
+    post:
+      summary: Invite team member
+      operationId: inviteUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - role
+              properties:
+                email:
+                  type: string
+                  example: "team@member.com"
+                role:
+                  type: string
+                  enum: [editor, viewer]
+                  example: "editor"
+      responses:
+        '200':
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invitation sent"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /workflows:
+    get:
+      summary: List workflows
+      operationId: listWorkflows
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: active
+          in: query
+          schema:
+            type: boolean
+          example: true
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: 10
+      responses:
+        '200':
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workflow'
+    post:
+      summary: Create workflow
+      operationId: createWorkflow
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - json
+              properties:
+                name:
+                  type: string
+                  example: "Lead Flow"
+                json:
+                  type: string
+                  example: '{"nodes": [{"id": "1", "type": "trigger"}]}'
+      responses:
+        '201':
+          description: Workflow created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+  /workflows/{id}:
+    get:
+      summary: Get workflow
+      operationId: getWorkflow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "uuid-5678"
+      responses:
+        '200':
+          description: Workflow data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update workflow
+      operationId: updateWorkflow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "uuid-5678"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Flow"
+                json:
+                  type: string
+                  example: '{"nodes": [{"id": "1", "type": "trigger"}]}'
+                active:
+                  type: boolean
+                  example: false
+      responses:
+        '200':
+          description: Workflow updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+    delete:
+      summary: Delete workflow
+      operationId: deleteWorkflow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "uuid-5678"
+      responses:
+        '204':
+          description: Workflow deleted
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /workflows/{id}/test:
+    post:
+      summary: Test workflow
+      operationId: testWorkflow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "uuid-5678"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                testData:
+                  type: object
+                  additionalProperties: true
+                  example: {"input": "test value"}
+      responses:
+        '200':
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+  /workflows/{id}/run:
+    post:
+      summary: Run workflow
+      operationId: runWorkflow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "uuid-5678"
+      responses:
+        '202':
+          description: Workflow queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  executionId:
+                    type: string
+                    example: "exec-3456"
+  /connections:
+    get:
+      summary: List connections
+      operationId: listConnections
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Connection'
+    post:
+      summary: Create connection
+      operationId: createConnection
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - service
+                - credentials
+              properties:
+                service:
+                  type: string
+                  example: "gmail"
+                credentials:
+                  type: object
+                  additionalProperties: true
+                  example: {"apiKey": "your-key"}
+      responses:
+        '201':
+          description: Connection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+  /connections/{id}:
+    get:
+      summary: Get connection
+      operationId: getConnection
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "uuid-9012"
+      responses:
+        '200':
+          description: Connection data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+    put:
+      summary: Update connection
+      operationId: updateConnection
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "uuid-9012"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credentials:
+                  type: object
+                  additionalProperties: true
+                  example: {"apiKey": "new-key"}
+      responses:
+        '200':
+          description: Connection updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+    delete:
+      summary: Delete connection
+      operationId: deleteConnection
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "uuid-9012"
+      responses:
+        '204':
+          description: Connection deleted
+  /templates:
+    get:
+      summary: List templates
+      operationId: listTemplates
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          example: "sales"
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Template'
+  /templates/{id}:
+    get:
+      summary: Get template
+      operationId: getTemplate
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "template-1"
+      responses:
+        '200':
+          description: Template data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+  /executions:
+    get:
+      summary: List executions
+      operationId: listExecutions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workflowId
+          in: query
+          schema:
+            type: string
+          example: "uuid-5678"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, success, failed]
+          example: "failed"
+      responses:
+        '200':
+          description: List of executions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Execution'
+  /executions/{id}:
+    get:
+      summary: Get execution
+      operationId: getExecution
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exec-3456"
+      responses:
+        '200':
+          description: Execution data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+  /subscriptions:
+    get:
+      summary: Get subscription status
+      operationId: getSubscription
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Subscription data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+  /subscriptions/upgrade:
+    post:
+      summary: Upgrade subscription
+      operationId: upgradeSubscription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - plan
+              properties:
+                plan:
+                  type: string
+                  enum: [starter, team]
+                  example: "starter"
+      responses:
+        '200':
+          description: Upgrade initiated (Stripe session)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionUrl:
+                    type: string
+                    example: "https://checkout.stripe.com/pay/cs_test_123"
+  /notifications/settings:
+    get:
+      summary: Get notification settings
+      operationId: getNotificationSettings
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Settings data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationSettings'
+    put:
+      summary: Update notification settings
+      operationId: updateNotificationSettings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationSettings'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationSettings'
+  /admin/users:
+    get:
+      summary: Admin list users
+      operationId: adminListUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+      description: Admin only
+  /admin/workflows:
+    get:
+      summary: Admin list workflows
+      operationId: adminListWorkflows
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workflow'
+      description: Admin only
+security:
+  - bearerAuth: []
