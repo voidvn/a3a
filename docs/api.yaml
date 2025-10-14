@@ -15,6 +15,29 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    Node:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "node-1"
+        type:
+          type: string
+          enum: [ trigger, action, logic, utility ]
+          example: "trigger"
+        data:
+          type: object
+          additionalProperties: true
+          example: { "type": "webhook", "config": { "url": "/webhook" } }
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+              example: 100
+            y:
+              type: number
+              example: 200
     User:
       type: object
       properties:
@@ -35,8 +58,16 @@ components:
           example: "Moscow"
         role:
           type: string
-          enum: [user, team, admin]
+          enum: [ user, team, admin ]
           example: "user"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-09-17T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-09-17T12:00:00Z"
     AuthResponse:
       type: object
       properties:
@@ -58,7 +89,23 @@ components:
         active:
           type: boolean
           example: true
+        maxTimeout:
+          type: integer
+          example: 300
+          description: Max execution time in seconds
+        retryCount:
+          type: integer
+          example: 3
+          description: Number of retries on failure
+        retryDelay:
+          type: integer
+          example: 60
+          description: Delay between retries in seconds
         createdAt:
+          type: string
+          format: date-time
+          example: "2025-09-17T12:00:00Z"
+        updatedAt:
           type: string
           format: date-time
           example: "2025-09-17T12:00:00Z"
@@ -74,7 +121,7 @@ components:
         credentials:
           type: object
           additionalProperties: true
-          example: {"apiKey": "encrypted-key"}
+          example: { "apiKey": "encrypted-key" }
     Template:
       type: object
       properties:
@@ -87,9 +134,18 @@ components:
         category:
           type: string
           example: "sales"
+          description: Category set by admin or system
         json:
           type: string
           example: '{"nodes": [{"id": "1", "type": "trigger", "data": {"type": "lead_new"}}]}'
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-09-17T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-09-17T12:00:00Z"
     Execution:
       type: object
       properties:
@@ -101,11 +157,15 @@ components:
           example: "uuid-5678"
         status:
           type: string
-          enum: [pending, success, failed]
+          enum: [ pending, success, failed ]
           example: "success"
         log:
           type: string
           example: "Node1: success, Node2: failed with error 'timeout'"
+        isTest:
+          type: boolean
+          example: true
+          description: Indicates if this was a test run
         startedAt:
           type: string
           format: date-time
@@ -122,11 +182,11 @@ components:
           example: "sub-7890"
         plan:
           type: string
-          enum: [freemium, starter, team]
+          enum: [ freemium, starter, team ]
           example: "starter"
         status:
           type: string
-          enum: [active, inactive]
+          enum: [ active, inactive ]
           example: "active"
         usage:
           type: object
@@ -150,7 +210,7 @@ components:
           type: array
           items:
             type: string
-          example: ["errors", "completions"]
+          example: [ "errors", "completions" ]
     ErrorResponse:
       type: object
       properties:
@@ -196,7 +256,7 @@ paths:
                   example: "Moscow"
                 role:
                   type: string
-                  enum: [user, team]
+                  enum: [ user, team ]
                   example: "user"
       responses:
         '201':
@@ -282,7 +342,7 @@ paths:
       summary: Get current user
       operationId: getCurrentUser
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       responses:
         '200':
           description: User data
@@ -296,12 +356,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update current user
+      operationId: updateCurrentUser
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  example: "Updated John Doe"
+                phone:
+                  type: string
+                  example: "+9876543210"
+                city:
+                  type: string
+                  example: "St. Petersburg"
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete current user
+      operationId: deleteCurrentUser
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '204':
+          description: User deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /users/invite:
     post:
       summary: Invite team member
       operationId: inviteUser
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -317,7 +425,7 @@ paths:
                   example: "team@member.com"
                 role:
                   type: string
-                  enum: [editor, viewer]
+                  enum: [ editor, viewer ]
                   example: "editor"
       responses:
         '200':
@@ -341,7 +449,7 @@ paths:
       summary: List workflows
       operationId: listWorkflows
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: active
           in: query
@@ -371,7 +479,7 @@ paths:
       summary: Create workflow
       operationId: createWorkflow
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -388,6 +496,15 @@ paths:
                 json:
                   type: string
                   example: '{"nodes": [{"id": "1", "type": "trigger"}]}'
+                maxTimeout:
+                  type: integer
+                  example: 300
+                retryCount:
+                  type: integer
+                  example: 3
+                retryDelay:
+                  type: integer
+                  example: 60
       responses:
         '201':
           description: Workflow created
@@ -400,7 +517,7 @@ paths:
       summary: Get workflow
       operationId: getWorkflow
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -425,7 +542,7 @@ paths:
       summary: Update workflow
       operationId: updateWorkflow
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -449,6 +566,15 @@ paths:
                 active:
                   type: boolean
                   example: false
+                maxTimeout:
+                  type: integer
+                  example: 300
+                retryCount:
+                  type: integer
+                  example: 3
+                retryDelay:
+                  type: integer
+                  example: 60
       responses:
         '200':
           description: Workflow updated
@@ -460,7 +586,7 @@ paths:
       summary: Delete workflow
       operationId: deleteWorkflow
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -482,7 +608,7 @@ paths:
       summary: Test workflow
       operationId: testWorkflow
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -499,7 +625,7 @@ paths:
                 testData:
                   type: object
                   additionalProperties: true
-                  example: {"input": "test value"}
+                  example: { "input": "test value" }
       responses:
         '200':
           description: Test result
@@ -512,7 +638,7 @@ paths:
       summary: Run workflow
       operationId: runWorkflow
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -536,7 +662,7 @@ paths:
       summary: List connections
       operationId: listConnections
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       responses:
         '200':
           description: List of connections
@@ -550,7 +676,7 @@ paths:
       summary: Create connection
       operationId: createConnection
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -567,7 +693,7 @@ paths:
                 credentials:
                   type: object
                   additionalProperties: true
-                  example: {"apiKey": "your-key"}
+                  example: { "apiKey": "your-key" }
       responses:
         '201':
           description: Connection created
@@ -580,7 +706,7 @@ paths:
       summary: Get connection
       operationId: getConnection
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -599,7 +725,7 @@ paths:
       summary: Update connection
       operationId: updateConnection
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -617,7 +743,7 @@ paths:
                 credentials:
                   type: object
                   additionalProperties: true
-                  example: {"apiKey": "new-key"}
+                  example: { "apiKey": "new-key" }
       responses:
         '200':
           description: Connection updated
@@ -629,7 +755,7 @@ paths:
       summary: Delete connection
       operationId: deleteConnection
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -645,7 +771,7 @@ paths:
       summary: List templates
       operationId: listTemplates
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: category
           in: query
@@ -661,12 +787,44 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Template'
+    post:
+      summary: Create template
+      operationId: createTemplate
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - category
+                - json
+              properties:
+                name:
+                  type: string
+                  example: "Lead Alert Template"
+                category:
+                  type: string
+                  example: "sales"
+                json:
+                  type: string
+                  example: '{"nodes": [{"id": "1", "type": "trigger"}]}'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
   /templates/{id}:
     get:
       summary: Get template
       operationId: getTemplate
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -681,12 +839,62 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Template'
+    put:
+      summary: Update template
+      operationId: updateTemplate
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "template-1"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Template"
+                category:
+                  type: string
+                  example: "marketing"
+                json:
+                  type: string
+                  example: '{"nodes": [{"id": "1", "type": "trigger"}]}'
+      responses:
+        '200':
+          description: Template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+    delete:
+      summary: Delete template
+      operationId: deleteTemplate
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "template-1"
+      responses:
+        '204':
+          description: Template deleted
   /executions:
     get:
       summary: List executions
       operationId: listExecutions
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: workflowId
           in: query
@@ -697,7 +905,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [pending, success, failed]
+            enum: [ pending, success, failed ]
           example: "failed"
       responses:
         '200':
@@ -713,7 +921,7 @@ paths:
       summary: Get execution
       operationId: getExecution
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -728,12 +936,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Execution'
+    delete:
+      summary: Delete execution
+      operationId: deleteExecution
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "exec-3456"
+      responses:
+        '204':
+          description: Execution deleted
   /subscriptions:
     get:
       summary: Get subscription status
       operationId: getSubscription
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       responses:
         '200':
           description: Subscription data
@@ -746,7 +969,7 @@ paths:
       summary: Upgrade subscription
       operationId: upgradeSubscription
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -758,7 +981,7 @@ paths:
               properties:
                 plan:
                   type: string
-                  enum: [starter, team]
+                  enum: [ starter, team ]
                   example: "starter"
       responses:
         '200':
@@ -776,7 +999,7 @@ paths:
       summary: Get notification settings
       operationId: getNotificationSettings
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       responses:
         '200':
           description: Settings data
@@ -788,7 +1011,7 @@ paths:
       summary: Update notification settings
       operationId: updateNotificationSettings
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -807,7 +1030,7 @@ paths:
       summary: Admin list users
       operationId: adminListUsers
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: page
           in: query
@@ -829,7 +1052,7 @@ paths:
       summary: Admin list workflows
       operationId: adminListWorkflows
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       responses:
         '200':
           description: List of workflows
@@ -841,4 +1064,4 @@ paths:
                   $ref: '#/components/schemas/Workflow'
       description: Admin only
 security:
-  - bearerAuth: []
+  - bearerAuth: [ ]
