@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/spf13/viper"
@@ -11,7 +12,6 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib" // database/sql driver name: "pgx"
 	_ "modernc.org/sqlite"             // database/sql driver name: "sqlite"
 
-	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/schema"
 )
@@ -28,16 +28,21 @@ func Connect() {
 		driver = "sqlite"
 	}
 
-	var sqlDriverName string
-	var migrateDialect string
+	var (
+		sqlDriverName string
+		dialect       string
+	)
+
 	switch driver {
 	case "postgres":
 		sqlDriverName = "pgx"
-		migrateDialect = dialect.Postgres
-		// DSN пример: "postgres://user:pass@host:5432/dbname?sslmode=disable"
+		dialect = "postgres"
+		if dsn == "" {
+			dsn = "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
+		}
 	case "sqlite":
-		sqlDriverName = "sqlite"
-		migrateDialect = dialect.SQLite
+		sqlDriverName = "sqlite3"
+		dialect = "sqlite3"
 		if dsn == "" {
 			dsn = "file:app.db?_pragma=foreign_keys(1)"
 		}
@@ -45,15 +50,25 @@ func Connect() {
 		log.Fatalf("Unsupported DB driver: %s", driver)
 	}
 
-	drv, err := entsql.Open(sqlDriverName, dsn)
+	// Create ent.Client and run the schema migration.
+	db, err := sql.Open(driver, dsn)
 	if err != nil {
-		log.Fatalf("failed opening SQL driver %q: %v", sqlDriverName, err)
+		log.Fatalf("failed opening connection to %s: %v", driver, err)
 	}
 
+	// Create an ent.Driver from `db`.
+	drv := entsql.OpenDB(dialect, db)
+
+	// Create the ent client with the driver.
 	c := ent.NewClient(ent.Driver(drv))
 
-	// ЯВНО указываем диалект для мигратора (нужно для modernc "sqlite")
-	if err := c.Schema.Create(context.Background(), schema.WithDialect(migrateDialect)); err != nil {
+	// Run migrations with the appropriate dialect
+	if err := c.Schema.Create(
+		context.Background(),
+		schema.WithDropIndex(true),   // Drop indexes if they were removed in the schema
+		schema.WithForeignKeys(true), // Enable foreign keys
+		schema.WithDialect(dialect),  // Use the appropriate dialect
+	); err != nil {
 		log.Fatalf("failed running migrations: %v", err)
 	}
 
