@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"s4s-backend/internal/modules/admin"
 	"syscall"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 	"s4s-backend/internal/modules/api"
 	//_ "s4s-backend/internal/modules/auth"
 	//_ "s4s-backend/internal/modules/workflow"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -69,6 +72,9 @@ func main() {
 			log.Fatalf("server error: %v", err)
 		}
 	}()
+
+	r := gin.Default()
+	admin.Init(r)
 
 	// 9. Graceful shutdown
 	quit := make(chan os.Signal, 1)
