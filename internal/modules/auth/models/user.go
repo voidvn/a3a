@@ -1,6 +1,12 @@
 package models
 
-import "time"
+import (
+	models2 "s4s-backend/internal/modules/notification/models"
+	"s4s-backend/internal/modules/subscription/models"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
 	ID           string         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
@@ -14,6 +20,6 @@ type User struct {
 	UpdatedAt    time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Subscription        Subscription        `gorm:"foreignKey:UserID" json:"-"`
-	NotificationSetting NotificationSetting `gorm:"foreignKey:UserID" json:"-"`
+	Subscription        models.Subscription         `gorm:"foreignKey:UserID" json:"-"`
+	NotificationSetting models2.NotificationSetting `gorm:"foreignKey:UserID" json:"-"`
 }

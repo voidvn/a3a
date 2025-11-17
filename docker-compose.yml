@@ -1,40 +1,73 @@
 version: '3.8'
 
 services:
-  db:
-    platform: linux/arm64
-    image: postgres:15-alpine
+  postgres:
+    image: postgres:16
+    networks:
+      - s4s-backend
+    restart: always
     environment:
+      POSTGRES_DB: s4s
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
-      interval: 5s
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 3s
       timeout: 5s
       retries: 5
+    volumes:
+      - ./tmp/pgdata:/var/lib/postgresql/data
 
-  app:
+  redis:
+    image: redis:7
+    networks:
+      - s4s-backend
+    restart: always
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    networks:
+      - s4s-backend
+    restart: always
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    ports:
+      - "5672:5672"
+      - "15672:15672" # management UI
+
+  backend:
     build: .
-    platform: linux/arm64
+    restart: always
+    networks:
+      - s4s-backend
     ports:
       - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
     environment:
-      - DB_DRIVER=postgres
-      - DB_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
-      - DB_HOST=db
+      - DB_HOST=postgres
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - DB_NAME=postgres
+      - DB_NAME=s4s
       - DB_PORT=5432
-    depends_on:
-      db:
-        condition: service_healthy
-    command: ["/app/wait-for-postgres.sh", "db:5432", "--", "/app/s4s-backend"]
+      - REDIS_ADDR=redis:6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
 
-volumes:
-  postgres_data:
+networks:
+  s4s-backend:
+    driver: bridge
