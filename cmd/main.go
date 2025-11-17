@@ -1,109 +1,62 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/gin-gonic/gin"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"gitlab.com/ncodeGroup/s4s-backend/internal/admin"
-	"gitlab.com/ncodeGroup/s4s-backend/internal/config"
-	"gitlab.com/ncodeGroup/s4s-backend/internal/db"
+	"s4s-backend/internal/api"
+	"s4s-backend/internal/config"
+	"s4s-backend/internal/db"
+	"s4s-backend/internal/modules/auth"
+	"s4s-backend/internal/modules/workflow"
 )
 
 func main() {
-	// Initialize configuration
-	config.Init()
-	// Initialize database
-	db.Connect()
-
-	// Create a new Gin router
-	r := gin.Default()
-
-	// Simple health check endpoint
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong"})
-	})
-
-	// Setup admin interface
-	setupAdmin(r)
-
-	// Run migrations
-	runMigrations()
-
-	// Start the server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	// 1. Загружаем конфиг (.env)
+	if err := config.Load(); err != nil {
+		log.Fatalf("failed to load config: %v", err)
 	}
 
-	log.Printf("Server starting on :%s\n", port)
-	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
-}
-
-func setupAdmin(r *gin.Engine) {
-	// Get database connection string from environment
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	if dbHost == "" {
-		dbHost = "db" // Default to service name in docker-compose
-	}
-	if dbPort == "" {
-		dbPort = "5432"
-	}
-	if dbUser == "" {
-		dbUser = "postgres"
-	}
-	if dbPassword == "" {
-		dbPassword = "postgres"
-	}
-	if dbName == "" {
-		dbName = "s4sdb"
-	}
-
-	dbURL := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbName, dbPassword)
-
-	// Initialize admin interface
-	adminHandler, err := admin.SetupAdmin(dbURL)
+	// 2. Подключаемся к PostgreSQL
+	database, err := db.Connect()
 	if err != nil {
-		log.Printf("Failed to initialize admin interface: %v", err)
-		return
+		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	// Mount admin to /admin
-	r.Any("/admin/*resources", gin.WrapH(adminHandler))
-	log.Println("Admin interface available at /admin")
-}
+	// 3. Запускаем миграции (один раз — всё встанет)
+	if err := db.RunMigrations(database); err != nil {
+		log.Fatalf("migration failed: %v", err)
+	}
 
-func runMigrations() {
-	// Get database configuration from environment
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPass := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
+	// 4. Инициализируем Gin роутер
+	router := api.NewRouter()
 
-	// Create the database URL for migrations
-	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		dbUser,
-		dbPass,
-		dbHost,
-		dbPort,
-		dbName,
-	)
+	// 5. Регистрируем модули (каждый сам вешает свои роуты)
+	auth.RegisterRoutes(router.Group("/auth"))
+	workflow.RegisterRoutes(router.Group("/workflows"))
+	// connections.RegisterRoutes(router.Group("/connections")) // когда будет готов
 
-	log.Printf("Running database migrations on %s\n", dbURL)
+	// 6. Глобальные middleware (логгер, recovery, CORS и т.д.)
+	api.SetupGlobalMiddleware(router)
 
-	// Run migrations using the database client
-	// The migrations will be handled by ent's automatic migration
-	// since we already called db.Connect() which runs the migrations
+	// 7. Запуск сервера
+	port := config.GetString("SERVER_PORT", "8080")
+	log.Printf("Server starting on :%s", port)
+
+	go func() {
+		if err := router.Run(":" + port); err != nil {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
+
+	// 8. Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	// тут можно добавить ctx shutdown если захочешь
+	log.Println("Server stopped")
 }

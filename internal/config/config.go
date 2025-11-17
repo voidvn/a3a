@@ -1,18 +1,18 @@
 package config
 
-import (
-	"log"
+import "github.com/spf13/viper"
 
-	"github.com/spf13/viper"
-)
-
-func Init() {
+func Load() error {
 	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
 	viper.AddConfigPath(".")
 	viper.AutomaticEnv()
+	return viper.ReadInConfig()
+}
 
-	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("No .env file found, using env vars: %v", err)
+func GetString(key, fallback string) string {
+	if viper.GetString(key) == "" {
+		return fallback
 	}
+	return viper.GetString(key)
 }
