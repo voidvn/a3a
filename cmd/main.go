@@ -8,7 +8,8 @@ import (
 	"s4s-backend/internal/config"
 	"s4s-backend/internal/db"
 	"s4s-backend/internal/modules/admin"
-	"s4s-backend/internal/modules/api"
+	_ "s4s-backend/internal/modules/api"
+	"s4s-backend/internal/modules/api/middleware"
 	_ "strconv"
 	"syscall"
 
@@ -35,24 +36,25 @@ func main() {
 		log.Fatalf("migration failed: %v", err)
 	}
 	// 4. Подключаемся к Redis (для кэша/сессий)
-	_, err = db.ConnectRedis()
-	if err != nil {
-		log.Fatalf("failed to connect Redis: %v", err)
-	}
+	//_, err = db.ConnectRedis()
+	//if err != nil {
+	//	log.Fatalf("failed to connect Redis: %v", err)
+	//}
 
 	// 5. Подключаемся к RabbitMQ (для очередей)
-	rabbitConn, err := db.ConnectRabbitMQ()
-	if err != nil {
-		log.Fatalf("failed to connect RabbitMQ: %v", err)
-	}
-	defer rabbitConn.Close()
+	//rabbitConn, err := db.ConnectRabbitMQ()
+	//if err != nil {
+	//	log.Fatalf("failed to connect RabbitMQ: %v", err)
+	//}
+	//defer rabbitConn.Close()
 
 	// 6. Инициализируем основной роутер Gin
 	r := gin.Default()
+	r.Use(middleware.RequestLogger())
 
 	// 7. Инициализируем API роуты
-	apiRouter := api.NewRouter()
-	api.RegisterRoutes(apiRouter)
+	//apiRouter := api.NewRouter()
+	//api.RegisterRoutes(apiRouter)
 
 	// 8. Инициализируем админ-панель
 	adminConfig := admin.GetAdminConfig(
@@ -62,7 +64,7 @@ func main() {
 	admin.InitAdmin(r, adminConfig)
 
 	// 9. Подключаем API роуты к основному роутеру
-	r.Any("/api/*any", gin.WrapH(apiRouter))
+	//r.Any("/api/*any", gin.WrapH(apiRouter))
 
 	// 10. Настраиваем HTTP сервер
 	port := os.Getenv("PORT")

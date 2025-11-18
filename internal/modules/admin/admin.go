@@ -1,10 +1,14 @@
 package admin
 
 import (
+	appConfig "s4s-backend/internal/config"
+
 	_ "github.com/GoAdminGroup/go-admin/adapter/gin"
 	"github.com/GoAdminGroup/go-admin/engine"
 	"github.com/GoAdminGroup/go-admin/modules/config"
+	_ "github.com/GoAdminGroup/go-admin/modules/db/drivers/postgres"
 	"github.com/GoAdminGroup/go-admin/modules/language"
+	"github.com/GoAdminGroup/go-admin/plugins/admin"
 	"github.com/GoAdminGroup/go-admin/template"
 	"github.com/GoAdminGroup/go-admin/template/chartjs"
 	_ "github.com/GoAdminGroup/themes/adminlte"
@@ -14,20 +18,16 @@ import (
 func InitAdmin(r *gin.Engine, cfg *config.Config) *engine.Engine {
 	eng := engine.Default()
 
-	// Настройка конфигурации
 	if err := eng.AddConfig(cfg).
 		AddGenerators(Generators).
 		Use(r); err != nil {
 		panic(err)
 	}
 
-	// Регистрация плагина админки
-	//adminPlugin := admin.NewAdmin(Tables)
-	////adminPlugin.AddDisplayFilterXssJsFilter()
-	//
-	//// Добавление графиков
+	adminPlugin := admin.NewAdmin(Tables)
+	adminPlugin.AddDisplayFilterXssJsFilter()
 	template.AddComp(chartjs.NewChart())
-	//eng.AddPlugins(adminPlugin)
+	eng.AddPlugins(adminPlugin)
 
 	return eng
 }
@@ -37,17 +37,17 @@ func GetAdminConfig(dbURL, appKey string) *config.Config {
 		Databases: config.DatabaseList{
 			"default": {
 				Driver:       config.DriverPostgresql,
-				Host:         "postgres", //appConfig.GetString("DB_HOST", "localhost"),
-				Port:         "5432",     //appConfig.GetString("DB_PORT", "5432"),
-				User:         "postgres", //appConfig.GetString("DB_USER", "postgres"),
-				Pwd:          "postgres", //appConfig.GetString("DB_PASSWORD", "postgres"),
-				Name:         "s4s",      //appConfig.GetString("DB_NAME", "postgres"),
+				Host:         appConfig.GetString("DB_HOST", "localhost"),
+				Port:         appConfig.GetString("DB_PORT", "5432"),
+				User:         appConfig.GetString("DB_USER", "postgres"),
+				Pwd:          appConfig.GetString("DB_PASSWORD", "postgres"),
+				Name:         appConfig.GetString("DB_NAME", "postgres"),
 				MaxIdleConns: 50,
 				MaxOpenConns: 150,
 			},
 		},
 		UrlPrefix: "admin",
-		LoginUrl:  "/admin/login",
+		//LoginUrl:  "",
 		Store: config.Store{
 			Path:   "./uploads",
 			Prefix: "uploads",

@@ -18,7 +18,7 @@ func RunMigrations(db *gorm.DB) error {
 	})
 
 	migrationsList := append([]*gormigrate.Migration{}, migrations.InitialSchema...)
-	migrationsList = append(migrationsList, migrations.AdminTables)
+	//migrationsList = append(migrationsList, migrations.AdminTables)
 	m = gormigrate.New(db, gormigrate.DefaultOptions, migrationsList)
 
 	return m.Migrate()
