@@ -1,8 +1,6 @@
 package admin
 
 import (
-	appConfig "s4s-backend/internal/config"
-
 	_ "github.com/GoAdminGroup/go-admin/adapter/gin"
 	"github.com/GoAdminGroup/go-admin/engine"
 	"github.com/GoAdminGroup/go-admin/modules/config"
@@ -29,7 +27,6 @@ func InitAdmin(r *gin.Engine, cfg *config.Config) *engine.Engine {
 	//
 	//// Добавление графиков
 	template.AddComp(chartjs.NewChart())
-	//
 	//eng.AddPlugins(adminPlugin)
 
 	return eng
@@ -40,11 +37,11 @@ func GetAdminConfig(dbURL, appKey string) *config.Config {
 		Databases: config.DatabaseList{
 			"default": {
 				Driver:       config.DriverPostgresql,
-				Host:         appConfig.GetString("DB_HOST", "localhost"),
-				Port:         appConfig.GetString("DB_PORT", "5432"),
-				User:         appConfig.GetString("DB_USER", "postgres"),
-				Pwd:          appConfig.GetString("DB_PASSWORD", "postgres"),
-				Name:         appConfig.GetString("DB_NAME", "postgres"),
+				Host:         "postgres", //appConfig.GetString("DB_HOST", "localhost"),
+				Port:         "5432",     //appConfig.GetString("DB_PORT", "5432"),
+				User:         "postgres", //appConfig.GetString("DB_USER", "postgres"),
+				Pwd:          "postgres", //appConfig.GetString("DB_PASSWORD", "postgres"),
+				Name:         "s4s",      //appConfig.GetString("DB_NAME", "postgres"),
 				MaxIdleConns: 50,
 				MaxOpenConns: 150,
 			},
@@ -69,5 +66,12 @@ func GetAdminConfig(dbURL, appKey string) *config.Config {
 		Logo:           "<b>s4s</b> Admin",
 		MiniLogo:       "<b>s4s</b>",
 		NoLimitLoginIP: true,
+		AuthUserTable:  "goadmin_users",
+		CustomHeadHtml: template.HTML(`<link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon.ico">`),
+		CustomFootHtml: template.HTML(`<div style="display:none;">Analytics code here</div>`),
+		Animation: config.PageAnimation{
+			Type:     "fadeInUp",
+			Duration: 0.9,
+		},
 	}
 }

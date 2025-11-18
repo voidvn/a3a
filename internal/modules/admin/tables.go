@@ -15,6 +15,7 @@ var Generators = map[string]table.Generator{
 	"executions":    GetExecutionsTable,
 	"connections":   GetConnectionsTable,
 	"subscriptions": GetSubscriptionsTable,
+	"goadmin_users": GetGoAdminUsersTable,
 }
 
 // Tables - список таблиц для админки
@@ -26,7 +27,6 @@ var Tables = table.GeneratorList{
 	"subscriptions": GetSubscriptionsTable,
 }
 
-// GetUsersTable - таблица пользователей
 func GetUsersTable(ctx *context.Context) table.Table {
 	users := table.NewDefaultTable(ctx)
 
@@ -126,7 +126,6 @@ func GetUsersTable(ctx *context.Context) table.Table {
 	return users
 }
 
-// GetWorkflowsTable - таблица workflows
 func GetWorkflowsTable(ctx *context.Context) table.Table {
 	workflows := table.NewDefaultTable(ctx)
 
@@ -208,7 +207,6 @@ func GetWorkflowsTable(ctx *context.Context) table.Table {
 	return workflows
 }
 
-// GetExecutionsTable - таблица запусков
 func GetExecutionsTable(ctx *context.Context) table.Table {
 	executions := table.NewDefaultTable(ctx)
 
@@ -278,7 +276,6 @@ func GetExecutionsTable(ctx *context.Context) table.Table {
 	return executions
 }
 
-// GetConnectionsTable - таблица интеграций
 func GetConnectionsTable(ctx *context.Context) table.Table {
 	connections := table.NewDefaultTable(ctx)
 
@@ -418,4 +415,30 @@ func GetSubscriptionsTable(ctx *context.Context) table.Table {
 	formList.SetTable("subscriptions").SetTitle("Подписки")
 
 	return subscriptions
+}
+
+func GetGoAdminUsersTable(ctx *context.Context) table.Table {
+	tbl := table.NewDefaultTable(ctx)
+
+	info := tbl.GetInfo().HideFilterArea()
+
+	info.AddField("ID", "id", db.Int).FieldSortable()
+	info.AddField("Username", "username", db.Varchar)
+	info.AddField("Name", "name", db.Varchar)
+	info.AddField("Created At", "created_at", db.Timestamp)
+	info.AddField("Updated At", "updated_at", db.Timestamp)
+
+	info.SetTable("goadmin_users").SetTitle("GoAdmin Users").SetDescription("Системные админы")
+
+	//frm := tbl.GetForm()
+	//frm.AddField("ID", "id", db.Int, frm.Text).FieldHideWhenCreate().FieldDisplayButCanNotEditWhenUpdate()
+	//frm.AddField("Username", "username", db.Varchar, frm.Text).FieldMust()
+	//frm.AddField("Name", "name", db.Varchar, frm.Text)
+	//frm.AddField("Password", "password", db.Varchar, frm.Password).
+	//	FieldMust().
+	//	FieldHelpMsg("Минимум 6 символов")
+	//
+	//frm.SetTable("goadmin_users").SetTitle("GoAdmin Users")
+
+	return tbl
 }
