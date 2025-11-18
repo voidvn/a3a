@@ -8,7 +8,6 @@ import (
 	"github.com/GoAdminGroup/go-admin/template/types/form"
 )
 
-// Generators - список генераторов таблиц
 var Generators = map[string]table.Generator{
 	"users":         GetUsersTable,
 	"workflows":     GetWorkflowsTable,
@@ -18,7 +17,6 @@ var Generators = map[string]table.Generator{
 	"goadmin_users": GetGoAdminUsersTable,
 }
 
-// Tables - список таблиц для админки
 var Tables = table.GeneratorList{
 	"users":         GetUsersTable,
 	"workflows":     GetWorkflowsTable,

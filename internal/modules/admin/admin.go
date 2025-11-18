@@ -2,13 +2,13 @@ package admin
 
 import (
 	appConfig "s4s-backend/internal/config"
+	"s4s-backend/internal/modules/admin/tables"
 
 	_ "github.com/GoAdminGroup/go-admin/adapter/gin"
 	"github.com/GoAdminGroup/go-admin/engine"
 	"github.com/GoAdminGroup/go-admin/modules/config"
 	_ "github.com/GoAdminGroup/go-admin/modules/db/drivers/postgres"
 	"github.com/GoAdminGroup/go-admin/modules/language"
-	"github.com/GoAdminGroup/go-admin/plugins/admin"
 	"github.com/GoAdminGroup/go-admin/template"
 	"github.com/GoAdminGroup/go-admin/template/chartjs"
 	_ "github.com/GoAdminGroup/themes/adminlte"
@@ -19,15 +19,16 @@ func InitAdmin(r *gin.Engine, cfg *config.Config) *engine.Engine {
 	eng := engine.Default()
 
 	if err := eng.AddConfig(cfg).
-		AddGenerators(Generators).
+		//AddGenerators(Generators).
+		AddGenerators(tables.Generators).
 		Use(r); err != nil {
 		panic(err)
 	}
 
-	adminPlugin := admin.NewAdmin(Tables)
-	adminPlugin.AddDisplayFilterXssJsFilter()
+	//adminPlugin := admin.NewAdmin(Tables)
+	//adminPlugin.AddDisplayFilterXssJsFilter()
 	template.AddComp(chartjs.NewChart())
-	eng.AddPlugins(adminPlugin)
+	//eng.AddPlugins(adminPlugin)
 
 	return eng
 }
@@ -47,7 +48,6 @@ func GetAdminConfig(dbURL, appKey string) *config.Config {
 			},
 		},
 		UrlPrefix: "admin",
-		//LoginUrl:  "",
 		Store: config.Store{
 			Path:   "./uploads",
 			Prefix: "uploads",
