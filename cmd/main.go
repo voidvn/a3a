@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"s4s-backend/internal/modules/admin"
+
 	//"s4s-backend/internal/modules/admin"
 	"syscall"
 	"time"
@@ -16,11 +18,7 @@ import (
 	//_ "s4s-backend/internal/modules/auth"
 	//_ "s4s-backend/internal/modules/workflow"
 
-	"github.com/GoAdminGroup/go-admin/engine"
-	goAdminConfig "github.com/GoAdminGroup/go-admin/modules/config"
 	_ "github.com/GoAdminGroup/go-admin/modules/db/drivers/postgres"
-	"github.com/GoAdminGroup/go-admin/modules/language"
-
 	_ "github.com/GoAdminGroup/themes/adminlte"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -82,39 +80,15 @@ func main() {
 
 	r := gin.Default()
 
-	// Instantiate a GoAdmin engine object.
-	eng := engine.Default()
+	adminConfig := admin.GetAdminConfig(
+		os.Getenv("DB_URL"),
+		os.Getenv("ADMIN_APP_KEY"),
+	)
 
-	// GoAdmin global configuration, can also be imported as a json file.
-	cfg := goAdminConfig.Config{
-		Databases: goAdminConfig.DatabaseList{
-			"default": {
-				Host:         config.GetString("DB_HOST", "localhost"),
-				Port:         config.GetString("DB_PORT", "5432"),
-				User:         config.GetString("DB_USER", "postgres"),
-				Pwd:          config.GetString("DB_PASSWORD", "postgres"),
-				Name:         config.GetString("DB_NAME", "postgres"),
-				MaxIdleConns: 50,
-				MaxOpenConns: 150,
-				Driver:       goAdminConfig.DriverPostgresql,
-			},
-		},
-		UrlPrefix: "admin", // The url prefix of the website.
-		// Store must be set and guaranteed to have write access, otherwise new administrator users cannot be added.
-		Store: goAdminConfig.Store{
-			Path:   "./uploads",
-			Prefix: "uploads",
-		},
-		Language: language.EN,
-		Theme:    "adminlte",
-	}
+	adminEngine := admin.InitAdmin(r, adminConfig)
 
-	// 9. Add GoAdmin to Gin
-	if err := eng.AddConfig(&cfg).Use(router); err != nil {
-		log.Fatalf("failed to add GoAdmin config to engine: %v", err)
-	}
-
-	_ = r.Run(":9033")
+	// Регистрация дашборда
+	adminEngine.HTML("GET", "/admin", admin.GetDashboard)
 
 	// 9. Graceful shutdown
 	quit := make(chan os.Signal, 1)
