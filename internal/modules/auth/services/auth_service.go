@@ -6,23 +6,23 @@ import (
 
 	"s4s-backend/internal/modules/auth/dto"
 	"s4s-backend/internal/modules/auth/models"
-	"s4s-backend/internal/modules/auth/repository"
+	authRepository "s4s-backend/internal/modules/auth/repository"
 	notificationModels "s4s-backend/internal/modules/notification/models"
-	"s4s-backend/internal/modules/notification/repository"
+	notificationRepository "s4s-backend/internal/modules/notification/repository"
 	subscriptionModels "s4s-backend/internal/modules/subscription/models"
-	"s4s-backend/internal/modules/subscription/repository"
+	subscriptionRepository "s4s-backend/internal/modules/subscription/repository"
 	"s4s-backend/internal/pkg/utils"
 )
 
 type AuthService struct {
-	userRepo         *repository.UserRepository
+	userRepo         *authRepository.UserRepository
 	subscriptionRepo *subscriptionRepository.SubscriptionRepository
 	notificationRepo *notificationRepository.NotificationRepository
 	jwtSecret        string
 }
 
 func NewAuthService(
-	userRepo *repository.UserRepository,
+	userRepo *authRepository.UserRepository,
 	subscriptionRepo *subscriptionRepository.SubscriptionRepository,
 	notificationRepo *notificationRepository.NotificationRepository,
 	jwtSecret string,
