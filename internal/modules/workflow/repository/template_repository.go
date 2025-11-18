@@ -1,8 +1,9 @@
 package repository
 
 import (
+	"s4s-backend/internal/modules/workflow/models"
+
 	"gorm.io/gorm"
-	"your-project/internal/models"
 )
 
 type TemplateRepository struct {

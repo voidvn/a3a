@@ -5,35 +5,34 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"s4s-backend/internal/modules/api/middleware"
+	"syscall"
+
+	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
+
 	"s4s-backend/internal/config"
 	"s4s-backend/internal/db"
 	"s4s-backend/internal/modules/admin"
-	_ "s4s-backend/internal/modules/api"
-	"s4s-backend/internal/modules/api/middleware"
-	_ "strconv"
-	"syscall"
-
-	_ "github.com/GoAdminGroup/go-admin/modules/db/drivers/postgres"
-	_ "github.com/GoAdminGroup/themes/adminlte"
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
+	"s4s-backend/internal/modules/api"
 )
 
 func main() {
-	// 1. Загружаем конфиг
-	if err := config.Load(); err != nil {
+	// 1. Load configuration
+	cfg, err := config.Load()
+	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
 	// 2. Подключаемся к PostgreSQL
 	database, err := db.Connect()
 	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
+		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	// 3. Запускаем миграции (AutoMigrate через GORM)
+	// 3. Run database migrations
 	if err := db.RunMigrations(database); err != nil {
-		log.Fatalf("migration failed: %v", err)
+		log.Fatalf("failed to run migrations: %v", err)
 	}
 	// 4. Подключаемся к Redis (для кэша/сессий)
 	//_, err = db.ConnectRedis()
@@ -52,9 +51,8 @@ func main() {
 	r := gin.Default()
 	r.Use(middleware.RequestLogger())
 
-	// 7. Инициализируем API роуты
-	//apiRouter := api.NewRouter()
-	//api.RegisterRoutes(apiRouter)
+	// 6. Initialize API routes
+	api.SetupRoutes(r, database, cfg)
 
 	// 8. Инициализируем админ-панель
 	adminConfig := admin.GetAdminConfig(
@@ -72,7 +70,7 @@ func main() {
 		port = "8080"
 	}
 
-	// 11. Start HTTP server in a goroutine
+	// 9. Start server in a goroutine
 	go func() {
 		log.Printf("Server starting on :%s", port)
 		if err := http.ListenAndServe(":"+port, r); err != nil {
@@ -80,7 +78,7 @@ func main() {
 		}
 	}()
 
-	// 12. Graceful shutdown
+	// 10. Wait for interrupt signal to gracefully shut down the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
