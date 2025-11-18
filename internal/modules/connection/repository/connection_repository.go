@@ -2,7 +2,7 @@ package repository
 
 import (
 	"gorm.io/gorm"
-	"your-project/internal/models"
+	"s4s-backend/internal/modules/connection/models"
 )
 
 type ConnectionRepository struct {

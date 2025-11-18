@@ -3,9 +3,10 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"time"
 )
 
 type StringArray []string
@@ -27,12 +28,9 @@ type NotificationSettings struct {
 	UserID    string      `gorm:"type:uuid;uniqueIndex;not null" json:"userId"`
 	Email     bool        `gorm:"default:true" json:"email"`
 	Slack     bool        `gorm:"default:false" json:"slack"`
-	Channels  StringArray `gorm:"type:jsonb" json:"channels"` // errors, completions
+	Channels  StringArray `gorm:"type:jsonb" json:"channels"`
 	CreatedAt time.Time   `json:"createdAt"`
 	UpdatedAt time.Time   `json:"updatedAt"`
-
-	// Relations
-	User User `gorm:"foreignKey:UserID" json:"-"`
 }
 
 func (n *NotificationSettings) BeforeCreate(tx *gorm.DB) error {
@@ -40,4 +38,8 @@ func (n *NotificationSettings) BeforeCreate(tx *gorm.DB) error {
 		n.ID = uuid.New().String()
 	}
 	return nil
+}
+
+func (NotificationSettings) TableName() string {
+	return "notification_settings"
 }

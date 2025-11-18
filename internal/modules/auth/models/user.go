@@ -18,11 +18,6 @@ type User struct {
 	EmailVerified bool      `gorm:"default:false" json:"emailVerified"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
-
-	// Relations
-	Workflows    []Workflow    `gorm:"foreignKey:UserID" json:"-"`
-	Connections  []Connection  `gorm:"foreignKey:UserID" json:"-"`
-	Subscription *Subscription `gorm:"foreignKey:UserID" json:"-"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
@@ -30,4 +25,8 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 		u.ID = uuid.New().String()
 	}
 	return nil
+}
+
+func (User) TableName() string {
+	return "users"
 }

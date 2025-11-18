@@ -1,10 +1,12 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
-	"your-project/internal/utils"
+
+	"s4s-backend/internal/pkg/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
@@ -34,19 +36,6 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		c.Set("userID", claims.UserID)
 		c.Set("email", claims.Email)
 		c.Set("role", claims.Role)
-
-		c.Next()
-	}
-}
-
-func AdminMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		role := c.GetString("role")
-		if role != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"message": "Admin access required", "code": 403})
-			c.Abort()
-			return
-		}
 
 		c.Next()
 	}

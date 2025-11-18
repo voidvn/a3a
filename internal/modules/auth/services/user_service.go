@@ -1,10 +1,11 @@
-package service
+package services
 
 import (
 	"errors"
-	"your-project/internal/dto"
-	"your-project/internal/models"
-	"your-project/internal/repository"
+
+	"s4s-backend/internal/modules/auth/dto"
+	"s4s-backend/internal/modules/auth/models"
+	"s4s-backend/internal/modules/auth/repository"
 )
 
 type UserService struct {
@@ -47,11 +48,9 @@ func (s *UserService) DeleteUser(userID string) error {
 }
 
 func (s *UserService) InviteUser(req *dto.InviteUserRequest) error {
-	// TODO: Send invitation email
-	// For now, just validate
 	if req.Email == "" {
 		return errors.New("email is required")
 	}
-
+	// TODO: Send invitation email
 	return nil
 }

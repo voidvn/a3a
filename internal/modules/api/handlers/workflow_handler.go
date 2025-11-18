@@ -1,36 +1,22 @@
-package handler
+package handlers
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
-	"your-project/internal/dto"
-	"your-project/internal/engine"
-	"your-project/internal/service"
+
+	"github.com/gin-gonic/gin"
+	"s4s-backend/internal/modules/workflow/dto"
+	"s4s-backend/internal/modules/workflow/services"
 )
 
 type WorkflowHandler struct {
-	workflowService *service.WorkflowService
-	workflowEngine  *engine.WorkflowEngine
+	workflowService *services.WorkflowService
 }
 
-func NewWorkflowHandler(workflowService *service.WorkflowService, workflowEngine *engine.WorkflowEngine) *WorkflowHandler {
-	return &WorkflowHandler{
-		workflowService: workflowService,
-		workflowEngine:  workflowEngine,
-	}
+func NewWorkflowHandler(workflowService *services.WorkflowService) *WorkflowHandler {
+	return &WorkflowHandler{workflowService: workflowService}
 }
 
-// ListWorkflows godoc
-// @Summary List workflows
-// @Tags workflows
-// @Security BearerAuth
-// @Produce json
-// @Param active query bool false "Filter by active status"
-// @Param page query int false "Page number"
-// @Param limit query int false "Items per page"
-// @Success 200 {array} models.Workflow
-// @Router /workflows [get]
 func (h *WorkflowHandler) ListWorkflows(c *gin.Context) {
 	userID := c.GetString("userID")
 
@@ -57,15 +43,6 @@ func (h *WorkflowHandler) ListWorkflows(c *gin.Context) {
 	})
 }
 
-// CreateWorkflow godoc
-// @Summary Create workflow
-// @Tags workflows
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param request body dto.CreateWorkflowRequest true "Workflow data"
-// @Success 201 {object} models.Workflow
-// @Router /workflows [post]
 func (h *WorkflowHandler) CreateWorkflow(c *gin.Context) {
 	userID := c.GetString("userID")
 
@@ -84,14 +61,6 @@ func (h *WorkflowHandler) CreateWorkflow(c *gin.Context) {
 	c.JSON(http.StatusCreated, workflow)
 }
 
-// GetWorkflow godoc
-// @Summary Get workflow
-// @Tags workflows
-// @Security BearerAuth
-// @Produce json
-// @Param id path string true "Workflow ID"
-// @Success 200 {object} models.Workflow
-// @Router /workflows/{id} [get]
 func (h *WorkflowHandler) GetWorkflow(c *gin.Context) {
 	id := c.Param("id")
 
@@ -104,16 +73,6 @@ func (h *WorkflowHandler) GetWorkflow(c *gin.Context) {
 	c.JSON(http.StatusOK, workflow)
 }
 
-// UpdateWorkflow godoc
-// @Summary Update workflow
-// @Tags workflows
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param id path string true "Workflow ID"
-// @Param request body dto.UpdateWorkflowRequest true "Update data"
-// @Success 200 {object} models.Workflow
-// @Router /workflows/{id} [put]
 func (h *WorkflowHandler) UpdateWorkflow(c *gin.Context) {
 	id := c.Param("id")
 
@@ -132,13 +91,6 @@ func (h *WorkflowHandler) UpdateWorkflow(c *gin.Context) {
 	c.JSON(http.StatusOK, workflow)
 }
 
-// DeleteWorkflow godoc
-// @Summary Delete workflow
-// @Tags workflows
-// @Security BearerAuth
-// @Param id path string true "Workflow ID"
-// @Success 204
-// @Router /workflows/{id} [delete]
 func (h *WorkflowHandler) DeleteWorkflow(c *gin.Context) {
 	id := c.Param("id")
 
@@ -151,23 +103,13 @@ func (h *WorkflowHandler) DeleteWorkflow(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// TestWorkflow godoc
-// @Summary Test workflow
-// @Tags workflows
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param id path string true "Workflow ID"
-// @Param request body dto.TestWorkflowRequest false "Test data"
-// @Success 200 {object} models.Execution
-// @Router /workflows/{id}/test [post]
 func (h *WorkflowHandler) TestWorkflow(c *gin.Context) {
 	id := c.Param("id")
 
 	var req dto.TestWorkflowRequest
 	c.ShouldBindJSON(&req)
 
-	executionID, err := h.workflowEngine.ExecuteWorkflow(c.Request.Context(), id, true, req.TestData)
+	executionID, err := h.workflowService.ExecuteWorkflow(c.Request.Context(), id, true, req.TestData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error(), "code": 400})
 		return
@@ -179,18 +121,10 @@ func (h *WorkflowHandler) TestWorkflow(c *gin.Context) {
 	})
 }
 
-// RunWorkflow godoc
-// @Summary Run workflow
-// @Tags workflows
-// @Security BearerAuth
-// @Produce json
-// @Param id path string true "Workflow ID"
-// @Success 202 {object} map[string]interface{}
-// @Router /workflows/{id}/run [post]
 func (h *WorkflowHandler) RunWorkflow(c *gin.Context) {
 	id := c.Param("id")
 
-	executionID, err := h.workflowEngine.ExecuteWorkflow(c.Request.Context(), id, false, nil)
+	executionID, err := h.workflowService.ExecuteWorkflow(c.Request.Context(), id, false, nil)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error(), "code": 400})
 		return

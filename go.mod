@@ -5,7 +5,6 @@ go 1.25
 require (
 	github.com/GoAdminGroup/go-admin v1.2.27-0.20240704013520-bf41aec4c9b4
 	github.com/GoAdminGroup/themes v0.0.48
-	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.5
 	github.com/golang-jwt/jwt/v5 v5.3.0
@@ -14,6 +13,7 @@ require (
 	github.com/redis/go-redis/v9 v9.16.0
 	github.com/spf13/viper v1.21.0
 	github.com/streadway/amqp v1.1.0
+	golang.org/x/crypto v0.40.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 )
@@ -72,7 +72,6 @@ require (
 	go.uber.org/zap v1.19.1 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.20.0 // indirect
-	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/mod v0.26.0 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect

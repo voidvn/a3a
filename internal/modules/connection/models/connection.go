@@ -11,13 +11,10 @@ type Connection struct {
 	UserID         string    `gorm:"type:uuid;not null" json:"userId"`
 	ServiceName    string    `gorm:"not null" json:"service"`
 	ConnectionName string    `json:"connectionName"`
-	Credentials    string    `gorm:"type:text;not null" json:"-"` // Encrypted JSON
+	Credentials    string    `gorm:"type:text;not null" json:"-"`
 	IsActive       bool      `gorm:"default:true" json:"isActive"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
-
-	// Relations
-	User User `gorm:"foreignKey:UserID" json:"-"`
 }
 
 func (c *Connection) BeforeCreate(tx *gorm.DB) error {
@@ -25,4 +22,8 @@ func (c *Connection) BeforeCreate(tx *gorm.DB) error {
 		c.ID = uuid.New().String()
 	}
 	return nil
+}
+
+func (Connection) TableName() string {
+	return "connections"
 }

@@ -1,8 +1,9 @@
 package repository
 
 import (
+	"s4s-backend/internal/modules/workflow/models"
+
 	"gorm.io/gorm"
-	"your-project/internal/models"
 )
 
 type WorkflowRepository struct {
@@ -19,7 +20,7 @@ func (r *WorkflowRepository) Create(workflow *models.Workflow) error {
 
 func (r *WorkflowRepository) FindByID(id string) (*models.Workflow, error) {
 	var workflow models.Workflow
-	err := r.db.Preload("User").First(&workflow, "id = ?", id).Error
+	err := r.db.First(&workflow, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}

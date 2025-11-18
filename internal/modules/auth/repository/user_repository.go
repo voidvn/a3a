@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"errors"
+	"s4s-backend/internal/modules/auth/models"
+
 	"gorm.io/gorm"
-	"your-project/internal/models"
 )
 
 type UserRepository struct {

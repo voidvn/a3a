@@ -12,11 +12,28 @@ import (
 	"time"
 )
 
+// Node represents a workflow node
+type Node struct {
+	ID       string                 `json:"id"`
+	Type     string                 `json:"type"`
+	Data     map[string]interface{} `json:"data"`
+	Position Position               `json:"position"`
+}
+
+type Position struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+// NodeExecutor interface for all node types
+type NodeExecutor interface {
+	Execute(ctx context.Context, node *Node, input map[string]interface{}) (map[string]interface{}, error)
+}
+
 // HTTPRequestExecutor executes HTTP requests
 type HTTPRequestExecutor struct{}
 
 func (h *HTTPRequestExecutor) Execute(ctx context.Context, node *Node, input map[string]interface{}) (map[string]interface{}, error) {
-	// Extract configuration
 	config, ok := node.Data["config"].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("invalid http request configuration")
@@ -34,10 +51,8 @@ func (h *HTTPRequestExecutor) Execute(ctx context.Context, node *Node, input map
 		return nil, errors.New("url is required")
 	}
 
-	// Replace variables in URL
 	url = replaceVariables(url, input)
 
-	// Create request
 	var bodyReader io.Reader
 	if body != nil {
 		bodyJSON, _ := json.Marshal(body)
@@ -49,19 +64,16 @@ func (h *HTTPRequestExecutor) Execute(ctx context.Context, node *Node, input map
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Add headers
 	for key, value := range headers {
 		if strValue, ok := value.(string); ok {
 			req.Header.Set(key, strValue)
 		}
 	}
 
-	// Set default Content-Type
 	if req.Header.Get("Content-Type") == "" && bodyReader != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	// Execute request
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -69,21 +81,17 @@ func (h *HTTPRequestExecutor) Execute(ctx context.Context, node *Node, input map
 	}
 	defer resp.Body.Close()
 
-	// Read response
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
-	// Check status code
 	if resp.StatusCode >= 400 {
 		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(respBody))
 	}
 
-	// Parse JSON response
 	var responseData map[string]interface{}
 	if err := json.Unmarshal(respBody, &responseData); err != nil {
-		// If not JSON, return raw body
 		responseData = map[string]interface{}{
 			"body": string(respBody),
 		}
@@ -99,7 +107,6 @@ func (h *HTTPRequestExecutor) Execute(ctx context.Context, node *Node, input map
 type EmailExecutor struct{}
 
 func (e *EmailExecutor) Execute(ctx context.Context, node *Node, input map[string]interface{}) (map[string]interface{}, error) {
-	// Extract configuration
 	config, ok := node.Data["config"].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("invalid email configuration")
@@ -118,12 +125,10 @@ func (e *EmailExecutor) Execute(ctx context.Context, node *Node, input map[strin
 		return nil, errors.New("to, subject, and body are required")
 	}
 
-	// Replace variables
 	to = replaceVariables(to, input)
 	subject = replaceVariables(subject, input)
 	body = replaceVariables(body, input)
 
-	// Default SMTP settings (for testing)
 	if smtpHost == "" {
 		smtpHost = "smtp.gmail.com"
 	}
@@ -134,10 +139,8 @@ func (e *EmailExecutor) Execute(ctx context.Context, node *Node, input map[strin
 		from = smtpUser
 	}
 
-	// Compose email
 	message := []byte(fmt.Sprintf("To: %s\r\nSubject: %s\r\n\r\n%s\r\n", to, subject, body))
 
-	// Send email
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
 	addr := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
 
@@ -153,11 +156,10 @@ func (e *EmailExecutor) Execute(ctx context.Context, node *Node, input map[strin
 	}, nil
 }
 
-// WebhookExecutor handles webhook triggers (no-op for execution)
+// WebhookExecutor handles webhook triggers
 type WebhookExecutor struct{}
 
 func (w *WebhookExecutor) Execute(ctx context.Context, node *Node, input map[string]interface{}) (map[string]interface{}, error) {
-	// Webhook is a trigger, just pass through the input data
 	return input, nil
 }
 
@@ -195,8 +197,6 @@ func (i *IfExecutor) Execute(ctx context.Context, node *Node, input map[string]i
 	}
 
 	condition, _ := config["condition"].(string)
-
-	// Simple condition evaluation (e.g., "status == 200")
 	result := evaluateCondition(condition, input)
 
 	return map[string]interface{}{
@@ -204,7 +204,7 @@ func (i *IfExecutor) Execute(ctx context.Context, node *Node, input map[string]i
 	}, nil
 }
 
-// Helper function to replace {{variables}} in strings
+// Helper functions
 func replaceVariables(text string, data map[string]interface{}) string {
 	result := text
 	for key, value := range data {
@@ -218,10 +218,7 @@ func replaceVariables(text string, data map[string]interface{}) string {
 	return result
 }
 
-// Simple condition evaluator (can be enhanced)
 func evaluateCondition(condition string, data map[string]interface{}) bool {
-	// Very basic evaluation for demo
-	// In production, use a proper expression evaluator
 	if strings.Contains(condition, "==") {
 		parts := strings.Split(condition, "==")
 		if len(parts) == 2 {

@@ -9,8 +9,8 @@ import (
 type Subscription struct {
 	ID                   string     `gorm:"type:uuid;primary_key" json:"id"`
 	UserID               string     `gorm:"type:uuid;uniqueIndex;not null" json:"userId"`
-	Plan                 string     `gorm:"default:'freemium'" json:"plan"` // freemium, starter, team
-	Status               string     `gorm:"default:'active'" json:"status"` // active, inactive, canceled
+	Plan                 string     `gorm:"default:'freemium'" json:"plan"`
+	Status               string     `gorm:"default:'active'" json:"status"`
 	WorkflowsLimit       int        `gorm:"default:5" json:"workflowsLimit"`
 	ExecutionsLimit      int        `gorm:"default:100" json:"executionsLimit"`
 	StripeSubscriptionID string     `json:"stripeSubscriptionId,omitempty"`
@@ -18,9 +18,6 @@ type Subscription struct {
 	ExpiresAt            *time.Time `json:"expiresAt,omitempty"`
 	CreatedAt            time.Time  `json:"createdAt"`
 	UpdatedAt            time.Time  `json:"updatedAt"`
-
-	// Relations
-	User User `gorm:"foreignKey:UserID" json:"-"`
 }
 
 func (s *Subscription) BeforeCreate(tx *gorm.DB) error {
@@ -28,4 +25,8 @@ func (s *Subscription) BeforeCreate(tx *gorm.DB) error {
 		s.ID = uuid.New().String()
 	}
 	return nil
+}
+
+func (Subscription) TableName() string {
+	return "subscriptions"
 }

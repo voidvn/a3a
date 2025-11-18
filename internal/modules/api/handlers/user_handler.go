@@ -1,28 +1,21 @@
-package handler
+package handlers
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
-	"your-project/internal/dto"
-	"your-project/internal/service"
+
+	"github.com/gin-gonic/gin"
+	"s4s-backend/internal/modules/auth/dto"
+	"s4s-backend/internal/modules/auth/services"
 )
 
 type UserHandler struct {
-	userService *service.UserService
+	userService *services.UserService
 }
 
-func NewUserHandler(userService *service.UserService) *UserHandler {
+func NewUserHandler(userService *services.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
-// GetCurrentUser godoc
-// @Summary Get current user
-// @Tags users
-// @Security BearerAuth
-// @Produce json
-// @Success 200 {object} models.User
-// @Failure 401 {object} map[string]interface{}
-// @Router /users/me [get]
 func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 	userID := c.GetString("userID")
 
@@ -35,16 +28,6 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// UpdateCurrentUser godoc
-// @Summary Update current user
-// @Tags users
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param request body dto.UpdateUserRequest true "Update data"
-// @Success 200 {object} models.User
-// @Failure 400 {object} map[string]interface{}
-// @Router /users/me [put]
 func (h *UserHandler) UpdateCurrentUser(c *gin.Context) {
 	userID := c.GetString("userID")
 
@@ -63,13 +46,6 @@ func (h *UserHandler) UpdateCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// DeleteCurrentUser godoc
-// @Summary Delete current user
-// @Tags users
-// @Security BearerAuth
-// @Success 204
-// @Failure 401 {object} map[string]interface{}
-// @Router /users/me [delete]
 func (h *UserHandler) DeleteCurrentUser(c *gin.Context) {
 	userID := c.GetString("userID")
 
@@ -82,16 +58,6 @@ func (h *UserHandler) DeleteCurrentUser(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// InviteUser godoc
-// @Summary Invite team member
-// @Tags users
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param request body dto.InviteUserRequest true "Invitation data"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Router /users/invite [post]
 func (h *UserHandler) InviteUser(c *gin.Context) {
 	var req dto.InviteUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

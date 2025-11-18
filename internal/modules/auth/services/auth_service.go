@@ -1,25 +1,30 @@
-package service
+package services
 
 import (
 	"errors"
 	"time"
-	"your-project/internal/dto"
-	"your-project/internal/models"
-	"your-project/internal/repository"
-	"your-project/internal/utils"
+
+	"s4s-backend/internal/modules/auth/dto"
+	"s4s-backend/internal/modules/auth/models"
+	"s4s-backend/internal/modules/auth/repository"
+	notificationModels "s4s-backend/internal/modules/notification/models"
+	"s4s-backend/internal/modules/notification/repository"
+	subscriptionModels "s4s-backend/internal/modules/subscription/models"
+	"s4s-backend/internal/modules/subscription/repository"
+	"s4s-backend/internal/pkg/utils"
 )
 
 type AuthService struct {
 	userRepo         *repository.UserRepository
-	subscriptionRepo *repository.SubscriptionRepository
-	notificationRepo *repository.NotificationRepository
+	subscriptionRepo *subscriptionRepository.SubscriptionRepository
+	notificationRepo *notificationRepository.NotificationRepository
 	jwtSecret        string
 }
 
 func NewAuthService(
 	userRepo *repository.UserRepository,
-	subscriptionRepo *repository.SubscriptionRepository,
-	notificationRepo *repository.NotificationRepository,
+	subscriptionRepo *subscriptionRepository.SubscriptionRepository,
+	notificationRepo *notificationRepository.NotificationRepository,
 	jwtSecret string,
 ) *AuthService {
 	return &AuthService{
@@ -59,7 +64,7 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 	}
 
 	// Create default subscription (freemium)
-	subscription := &models.Subscription{
+	subscription := &subscriptionModels.Subscription{
 		UserID:          user.ID,
 		Plan:            "freemium",
 		Status:          "active",
@@ -73,7 +78,7 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 	}
 
 	// Create default notification settings
-	notifSettings := &models.NotificationSettings{
+	notifSettings := &notificationModels.NotificationSettings{
 		UserID:   user.ID,
 		Email:    true,
 		Slack:    false,
@@ -132,7 +137,6 @@ func (s *AuthService) ForgotPassword(req *dto.ForgotPasswordRequest) error {
 	}
 
 	// TODO: Generate reset token and send email
-	// For now, just log
 	_ = user
 
 	return nil

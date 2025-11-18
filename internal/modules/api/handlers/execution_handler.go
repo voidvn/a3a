@@ -1,29 +1,21 @@
-package handler
+package handlers
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
-	"your-project/internal/service"
+
+	"github.com/gin-gonic/gin"
+	"s4s-backend/internal/modules/workflow/services"
 )
 
 type ExecutionHandler struct {
-	executionService *service.ExecutionService
+	executionService *services.ExecutionService
 }
 
-func NewExecutionHandler(executionService *service.ExecutionService) *ExecutionHandler {
+func NewExecutionHandler(executionService *services.ExecutionService) *ExecutionHandler {
 	return &ExecutionHandler{executionService: executionService}
 }
 
-// ListExecutions godoc
-// @Summary List executions
-// @Tags executions
-// @Security BearerAuth
-// @Produce json
-// @Param workflowId query string false "Filter by workflow ID"
-// @Param status query string false "Filter by status"
-// @Success 200 {array} models.Execution
-// @Router /executions [get]
 func (h *ExecutionHandler) ListExecutions(c *gin.Context) {
 	workflowID := c.Query("workflowId")
 	status := c.Query("status")
@@ -44,14 +36,6 @@ func (h *ExecutionHandler) ListExecutions(c *gin.Context) {
 	})
 }
 
-// GetExecution godoc
-// @Summary Get execution
-// @Tags executions
-// @Security BearerAuth
-// @Produce json
-// @Param id path string true "Execution ID"
-// @Success 200 {object} models.Execution
-// @Router /executions/{id} [get]
 func (h *ExecutionHandler) GetExecution(c *gin.Context) {
 	id := c.Param("id")
 
@@ -64,13 +48,6 @@ func (h *ExecutionHandler) GetExecution(c *gin.Context) {
 	c.JSON(http.StatusOK, execution)
 }
 
-// DeleteExecution godoc
-// @Summary Delete execution
-// @Tags executions
-// @Security BearerAuth
-// @Param id path string true "Execution ID"
-// @Success 204
-// @Router /executions/{id} [delete]
 func (h *ExecutionHandler) DeleteExecution(c *gin.Context) {
 	id := c.Param("id")
 
