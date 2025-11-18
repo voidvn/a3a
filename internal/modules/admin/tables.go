@@ -28,7 +28,7 @@ var Tables = table.GeneratorList{
 
 // GetUsersTable - таблица пользователей
 func GetUsersTable(ctx *context.Context) table.Table {
-	users := table.NewDefaultTable(table.DefaultConfigWithDriver("postgresql"))
+	users := table.NewDefaultTable(ctx)
 
 	info := users.GetInfo().HideFilterArea()
 
@@ -128,7 +128,7 @@ func GetUsersTable(ctx *context.Context) table.Table {
 
 // GetWorkflowsTable - таблица workflows
 func GetWorkflowsTable(ctx *context.Context) table.Table {
-	workflows := table.NewDefaultTable(table.DefaultConfigWithDriver("postgresql"))
+	workflows := table.NewDefaultTable(ctx)
 
 	info := workflows.GetInfo().HideFilterArea()
 
@@ -210,7 +210,7 @@ func GetWorkflowsTable(ctx *context.Context) table.Table {
 
 // GetExecutionsTable - таблица запусков
 func GetExecutionsTable(ctx *context.Context) table.Table {
-	executions := table.NewDefaultTable(table.DefaultConfigWithDriver("postgresql"))
+	executions := table.NewDefaultTable(ctx)
 
 	info := executions.GetInfo().HideFilterArea()
 
@@ -280,7 +280,7 @@ func GetExecutionsTable(ctx *context.Context) table.Table {
 
 // GetConnectionsTable - таблица интеграций
 func GetConnectionsTable(ctx *context.Context) table.Table {
-	connections := table.NewDefaultTable(table.DefaultConfigWithDriver("postgresql"))
+	connections := table.NewDefaultTable(ctx)
 
 	info := connections.GetInfo()
 
@@ -340,7 +340,7 @@ func GetConnectionsTable(ctx *context.Context) table.Table {
 
 // GetSubscriptionsTable - таблица подписок
 func GetSubscriptionsTable(ctx *context.Context) table.Table {
-	subscriptions := table.NewDefaultTable(table.DefaultConfigWithDriver("postgresql"))
+	subscriptions := table.NewDefaultTable(ctx)
 
 	info := subscriptions.GetInfo()
 
