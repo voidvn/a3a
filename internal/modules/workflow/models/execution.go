@@ -1,14 +1,31 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type Execution struct {
-	ID         string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	WorkflowID string     `gorm:"type:uuid;not null;index" json:"workflow_id"`
-	UserID     string     `gorm:"type:uuid;not null;index" json:"user_id"`
-	Status     string     `gorm:"size:20;default:'pending'" json:"status"` // pending, running, success, failed
-	IsTest     bool       `gorm:"default:false" json:"is_test"`
-	Log        string     `gorm:"type:text" json:"log,omitempty"`
-	StartedAt  time.Time  `json:"started_at,omitempty"`
-	EndedAt    *time.Time `json:"ended_at,omitempty"`
+	ID              string     `gorm:"type:uuid;primary_key" json:"id"`
+	WorkflowID      string     `gorm:"type:uuid;not null" json:"workflowId"`
+	Status          string     `gorm:"default:'pending'" json:"status"` // pending, running, success, failed
+	Log             string     `gorm:"type:text" json:"log"`
+	IsTest          bool       `gorm:"default:false" json:"isTest"`
+	ErrorMessage    string     `gorm:"type:text" json:"errorMessage,omitempty"`
+	DurationSeconds int        `json:"durationSeconds"`
+	StartedAt       *time.Time `json:"startedAt,omitempty"`
+	EndedAt         *time.Time `json:"endedAt,omitempty"`
+	CreatedAt       time.Time  `json:"createdAt"`
+
+	// Relations
+	Workflow Workflow `gorm:"foreignKey:WorkflowID" json:"-"`
+}
+
+func (e *Execution) BeforeCreate(tx *gorm.DB) error {
+	if e.ID == "" {
+		e.ID = uuid.New().String()
+	}
+	return nil
 }

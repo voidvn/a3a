@@ -1,25 +1,33 @@
 package models
 
 import (
-	models2 "s4s-backend/internal/modules/notification/models"
-	"s4s-backend/internal/modules/subscription/models"
-	"time"
-
+	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"time"
 )
 
 type User struct {
-	ID           string         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	FullName     string         `gorm:"size:255;not null" json:"full_name"`
-	Email        string         `gorm:"size:255;unique;not null" json:"email"`
-	PasswordHash string         `gorm:"size:255;not null" json:"-"`
-	Phone        string         `gorm:"size:50" json:"phone,omitempty"`
-	City         string         `gorm:"size:100" json:"city,omitempty"`
-	Role         string         `gorm:"size:20;default:'user'" json:"role"` // user, team, admin
-	CreatedAt    time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt    time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+	ID            string    `gorm:"type:uuid;primary_key" json:"id"`
+	FullName      string    `gorm:"not null" json:"fullName"`
+	Email         string    `gorm:"uniqueIndex;not null" json:"email"`
+	PasswordHash  string    `gorm:"not null" json:"-"`
+	Phone         string    `json:"phone"`
+	City          string    `json:"city"`
+	Role          string    `gorm:"default:'user'" json:"role"` // user, team, admin
+	IsActive      bool      `gorm:"default:true" json:"isActive"`
+	EmailVerified bool      `gorm:"default:false" json:"emailVerified"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 
-	Subscription        models.Subscription         `gorm:"foreignKey:UserID" json:"-"`
-	NotificationSetting models2.NotificationSetting `gorm:"foreignKey:UserID" json:"-"`
+	// Relations
+	Workflows    []Workflow    `gorm:"foreignKey:UserID" json:"-"`
+	Connections  []Connection  `gorm:"foreignKey:UserID" json:"-"`
+	Subscription *Subscription `gorm:"foreignKey:UserID" json:"-"`
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	if u.ID == "" {
+		u.ID = uuid.New().String()
+	}
+	return nil
 }

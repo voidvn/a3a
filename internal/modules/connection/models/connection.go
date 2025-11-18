@@ -1,12 +1,28 @@
 package models
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"time"
+)
 
 type Connection struct {
-	ID                   string    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	UserID               string    `gorm:"type:uuid;not null;index" json:"user_id"`
-	Service              string    `gorm:"size:100;not null" json:"service"` // slack, gmail, crm, etc.
-	EncryptedCredentials string    `gorm:"type:text;not null" json:"-"`      // AES-256
-	CreatedAt            time.Time `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt            time.Time `gorm:"autoUpdateTime" json:"updated_at"`
+	ID             string    `gorm:"type:uuid;primary_key" json:"id"`
+	UserID         string    `gorm:"type:uuid;not null" json:"userId"`
+	ServiceName    string    `gorm:"not null" json:"service"`
+	ConnectionName string    `json:"connectionName"`
+	Credentials    string    `gorm:"type:text;not null" json:"-"` // Encrypted JSON
+	IsActive       bool      `gorm:"default:true" json:"isActive"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+
+	// Relations
+	User User `gorm:"foreignKey:UserID" json:"-"`
+}
+
+func (c *Connection) BeforeCreate(tx *gorm.DB) error {
+	if c.ID == "" {
+		c.ID = uuid.New().String()
+	}
+	return nil
 }
