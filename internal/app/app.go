@@ -51,7 +51,7 @@ func Start() {
 	r.Use(middleware.RequestLogger())
 	r.Use(middleware.CORSMiddleware())
 
-	// 6. Initialize API routes
+	// 7. Initialize API routes
 	api.SetupRoutes(r, database, cfg)
 
 	// 8. Initialize the admin panel
@@ -61,16 +61,13 @@ func Start() {
 	)
 	admin.InitAdmin(r, adminConfig)
 
-	// 9. Connect API routes to the main router
-	//r.Any("/api/*any", gin.WrapH(apiRouter))
-
-	// 10. Configure the HTTP server
+	// 9. Configure the HTTP server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// 9. Start server in a goroutine
+	// 10. Start server in a goroutine
 	go func() {
 		log.Printf("Server starting on :%s", port)
 		if err := http.ListenAndServe(":"+port, r); err != nil {
@@ -78,7 +75,7 @@ func Start() {
 		}
 	}()
 
-	// 10. Wait for interrupt signal to gracefully shut down the server
+	// 11. Wait for interrupt signal to gracefully shut down the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
