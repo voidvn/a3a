@@ -3,10 +3,12 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
-	"github.com/gin-gonic/gin"
 	"s4s-backend/internal/modules/workflow/dto"
 	"s4s-backend/internal/modules/workflow/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 type WorkflowHandler struct {
@@ -64,13 +66,46 @@ func (h *WorkflowHandler) CreateWorkflow(c *gin.Context) {
 func (h *WorkflowHandler) GetWorkflow(c *gin.Context) {
 	id := c.Param("id")
 
-	workflow, err := h.workflowService.GetWorkflow(id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Workflow not found", "code": 404})
-		return
+	// Define a custom response struct that will handle the JSON field as a string
+	type workflowResponse struct {
+		ID              string    `json:"id"`
+		UserID          string    `json:"userId"`
+		Name            string    `json:"name"`
+		JSON            string    `json:"json"` // Changed to string
+		Active          bool      `json:"active"`
+		MaxTimeout      int       `json:"maxTimeout"`
+		RetryCount      int       `json:"retryCount"`
+		RetryDelay      int       `json:"retryDelay"`
+		TriggerType     string    `json:"triggerType"`
+		TotalExecutions int       `json:"totalExecutions"`
+		SuccessCount    int       `json:"successCount"`
+		ErrorCount      int       `json:"errorCount"`
+		CreatedAt       time.Time `json:"createdAt"`
+		UpdatedAt       time.Time `json:"updatedAt"`
 	}
 
-	c.JSON(http.StatusOK, workflow)
+	// The JSON string as is, without unmarshaling
+	jsonStr := `{"edges":[{"id":"xy-edge__2535ztb-mu4umeh","source":"2535ztb","target":"mu4umeh"},{"id":"xy-edge__mu4umeh-0djt8do","source":"mu4umeh","target":"0djt8do"},{"id":"xy-edge__0djt8do-yct4tm0","source":"0djt8do","target":"yct4tm0"}],"nodes":[{"id":"2535ztb","data":{"data":{"type":"webhook","config":{}},"type":"trigger","label":"Trigger Node"},"type":"input","width":75,"height":75,"dragging":false,"measured":{"width":75,"height":75},"position":{"x":122.5,"y":265},"selected":false,"deletable":true},{"id":"mu4umeh","data":{"data":{"type":"http_request","config":{"path":"/api/user","method":"GET","authentication":"JWT Auth"}},"type":"action","label":"Request To User API"},"type":"default","width":75,"height":75,"dragging":false,"measured":{"width":75,"height":75},"position":{"x":117.25034365844411,"y":438.97360127951174},"selected":false,"deletable":true},{"id":"0djt8do","data":{"data":{"type":"delay","config":{}},"type":"action","label":"Wait 2000 ms"},"type":"default","width":75,"height":75,"dragging":false,"measured":{"width":75,"height":75},"position":{"x":215.83062924779745,"y":580.3484294502896},"selected":false,"deletable":true},{"id":"yct4tm0","data":{"data":{"type":"slack","config":{}},"type":"action","label":"Notify Sale Managers"},"type":"default","width":75,"height":75,"dragging":false,"measured":{"width":75,"height":75},"position":{"x":445.0871073625724,"y":702.618551111503},"selected":true,"deletable":true}]}`
+
+	response := workflowResponse{
+		ID:              id,
+		Name:            "Hardcoded Workflow",
+		JSON:            jsonStr, // Directly use the JSON string
+		Active:          true,
+		MaxTimeout:      300,
+		RetryCount:      3,
+		RetryDelay:      60,
+		TriggerType:     "webhook",
+		TotalExecutions: 0,
+		SuccessCount:    0,
+		ErrorCount:      0,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": response,
+	})
 }
 
 func (h *WorkflowHandler) UpdateWorkflow(c *gin.Context) {

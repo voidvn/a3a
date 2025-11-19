@@ -34,19 +34,19 @@ func NewWorkflowService(
 
 func (s *WorkflowService) CreateWorkflow(userID string, req *dto.CreateWorkflowRequest) (*models.Workflow, error) {
 	// Check subscription limits
-	subscription, err := s.subscriptionRepo.FindByUserID(userID)
-	if err != nil {
-		return nil, errors.New("subscription not found")
-	}
+	//subscription, err := s.subscriptionRepo.FindByUserID(userID)
+	//if err != nil {
+	//	return nil, errors.New("subscription not found")
+	//}
 
-	workflows, _, err := s.workflowRepo.FindByUserID(userID, nil, 1, 1000)
-	if err != nil {
-		return nil, err
-	}
+	//workflows, _, err := s.workflowRepo.FindByUserID(userID, nil, 1, 1000)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	if len(workflows) >= subscription.WorkflowsLimit {
-		return nil, errors.New("workflow limit reached, please upgrade your plan")
-	}
+	//if len(workflows) >= subscription.WorkflowsLimit {
+	//	return nil, errors.New("workflow limit reached, please upgrade your plan")
+	//}
 
 	workflow := &models.Workflow{
 		UserID:     userID,

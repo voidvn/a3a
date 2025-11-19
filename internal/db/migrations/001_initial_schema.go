@@ -12,18 +12,19 @@ var InitialSchema = []*gormigrate.Migration{
 		ID: "20251117_001_initial_schema",
 		Migrate: func(db *gorm.DB) error {
 			type User struct {
-				ID           string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-				FullName     string `gorm:"size:255;not null"`
-				Email        string `gorm:"uniqueIndex;size:255;not null"`
-				PasswordHash string `gorm:"size:255;not null"`
-				Phone        string `gorm:"size:50"`
-				City         string `gorm:"size:100"`
-				Role         string `gorm:"size:20;default:'user';not null"`
-				IsActive     bool   `gorm:"default:true;not null"`
-				LastLoginAt  *time.Time
-				CreatedAt    time.Time
-				UpdatedAt    time.Time
-				DeletedAt    gorm.DeletedAt `gorm:"index"`
+				ID              string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+				FullName        string `gorm:"size:255;not null"`
+				Email           string `gorm:"uniqueIndex;size:255;not null"`
+				PasswordHash    string `gorm:"size:255;not null"`
+				Phone           string `gorm:"size:50"`
+				City            string `gorm:"size:100"`
+				Role            string `gorm:"size:20;default:'user';not null"`
+				IsActive        bool   `gorm:"default:true;not null"`
+				EmailVerifiedAt *time.Time
+				LastLoginAt     *time.Time
+				CreatedAt       time.Time
+				UpdatedAt       time.Time
+				DeletedAt       gorm.DeletedAt `gorm:"index"`
 			}
 
 			type Workflow struct {

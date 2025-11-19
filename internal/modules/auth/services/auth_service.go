@@ -2,14 +2,10 @@ package services
 
 import (
 	"errors"
-	"time"
-
 	"s4s-backend/internal/modules/auth/dto"
 	"s4s-backend/internal/modules/auth/models"
 	authRepository "s4s-backend/internal/modules/auth/repository"
-	notificationModels "s4s-backend/internal/modules/notification/models"
 	notificationRepository "s4s-backend/internal/modules/notification/repository"
-	subscriptionModels "s4s-backend/internal/modules/subscription/models"
 	subscriptionRepository "s4s-backend/internal/modules/subscription/repository"
 	"s4s-backend/internal/pkg/utils"
 )
@@ -64,30 +60,30 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 	}
 
 	// Create default subscription (freemium)
-	subscription := &subscriptionModels.Subscription{
-		UserID:          user.ID,
-		Plan:            "freemium",
-		Status:          "active",
-		WorkflowsLimit:  5,
-		ExecutionsLimit: 100,
-		StartedAt:       time.Now(),
-	}
+	//subscription := &subscriptionModels.Subscription{
+	//	UserID:          user.ID,
+	//	Plan:            "freemium",
+	//	Status:          "active",
+	//	WorkflowsLimit:  5,
+	//	ExecutionsLimit: 100,
+	//	StartedAt:       time.Now(),
+	//}
 
-	if err := s.subscriptionRepo.Create(subscription); err != nil {
-		return nil, err
-	}
+	//if err := s.subscriptionRepo.Create(subscription); err != nil {
+	//	return nil, err
+	//}
 
 	// Create default notification settings
-	notifSettings := &notificationModels.NotificationSettings{
-		UserID:   user.ID,
-		Email:    true,
-		Slack:    false,
-		Channels: []string{"errors"},
-	}
+	//notifSettings := &notificationModels.NotificationSettings{
+	//	UserID:   user.ID,
+	//	Email:    true,
+	//	Slack:    false,
+	//	Channels: []string{"errors"},
+	//}
 
-	if err := s.notificationRepo.Create(notifSettings); err != nil {
-		return nil, err
-	}
+	//if err := s.notificationRepo.Create(notifSettings); err != nil {
+	//	return nil, err
+	//}
 
 	// Generate JWT
 	token, err := utils.GenerateJWT(user.ID, user.Email, user.Role, s.jwtSecret)

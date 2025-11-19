@@ -50,6 +50,7 @@ func main() {
 	// 6. Инициализируем основной роутер Gin
 	r := gin.Default()
 	r.Use(middleware.RequestLogger())
+	r.Use(middleware.CORSMiddleware())
 
 	// 6. Initialize API routes
 	api.SetupRoutes(r, database, cfg)
